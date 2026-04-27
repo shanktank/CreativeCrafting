@@ -32,6 +32,7 @@ public abstract class CreativeInventoryScreenMixin extends HandledScreen<ScreenH
     @Inject(method = "setSelectedTab", at = @At("TAIL"))
     private void onSetSelectedTab(ItemGroup tab, CallbackInfo ci) {
         if (!tab.getType().equals(ItemGroup.Type.INVENTORY)) return;
+        if (handler.slots.size() < 5) return;
 
         for (int i = 0; i < 5; i++) {
             Slot slot = handler.slots.get(i);
@@ -44,6 +45,7 @@ public abstract class CreativeInventoryScreenMixin extends HandledScreen<ScreenH
     @Inject(method = "drawBackground", at = @At("TAIL"))
     private void onDrawBackground(DrawContext context, float delta, int mouseX, int mouseY, CallbackInfo ci) {
         if (!selectedTab.getType().equals(ItemGroup.Type.INVENTORY)) return;
+        if (handler.slots.size() < 5) return;
 
         for (int i = 0; i < 5; i++) {
             Slot slot = handler.slots.get(i);
