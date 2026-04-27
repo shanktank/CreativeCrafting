@@ -76,7 +76,7 @@ public class CreativeCrafting implements ClientModInitializer {
     }
 
     public static class Config {
-        private boolean sticky = true;
+        private boolean sticky;
 
         public Config(boolean sticky) {
             this.sticky = sticky;

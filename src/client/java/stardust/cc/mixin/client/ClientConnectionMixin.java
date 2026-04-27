@@ -26,7 +26,7 @@ public abstract class ClientConnectionMixin {
 
         for (int i = 1; i < 5; i++) {
             if (!playerScreenHandler.slots.get(i).getStack().isEmpty()) {
-                CreativeCrafting.LOGGER.info("[CreativeCrafting] Canceled CloseHandledScreenC2SPacket with syncId=" + p.getSyncId() + " (slot " + i + " not empty)");
+                CreativeCrafting.LOGGER.debug("[CreativeCrafting] Canceled CloseHandledScreenC2SPacket with syncId={} (slot {} not empty)", p.getSyncId(), i);
                 ci.cancel();
                 return;
             }

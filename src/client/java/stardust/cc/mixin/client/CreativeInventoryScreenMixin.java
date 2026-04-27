@@ -4,6 +4,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.input.KeyInput;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
@@ -12,6 +13,7 @@ import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -19,8 +21,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(CreativeInventoryScreen.class)
 public abstract class CreativeInventoryScreenMixin extends HandledScreen<ScreenHandler> {
-    private static final int[] SLOT_X = { 172, 133, 151, 133, 151 };
-    private static final int[] SLOT_Y = {  20,  10,  10,  28,  28 };
+    @Unique private static final int[] _CC_SLOT_X = { 172, 133, 151, 133, 151 };
+    @Unique private static final int[] _CC_SLOT_Y = {  20,  10,  10,  28,  28 };
 
     @Shadow private static ItemGroup selectedTab;
 
@@ -36,8 +38,8 @@ public abstract class CreativeInventoryScreenMixin extends HandledScreen<ScreenH
 
         for (int i = 0; i < 5; i++) {
             Slot slot = handler.slots.get(i);
-            slot.x = SLOT_X[i];
-            slot.y = SLOT_Y[i];
+            slot.x = _CC_SLOT_X[i];
+            slot.y = _CC_SLOT_Y[i];
         }
     }
 
@@ -65,12 +67,16 @@ public abstract class CreativeInventoryScreenMixin extends HandledScreen<ScreenH
     private void onKeyPressed(KeyInput input, CallbackInfoReturnable<Boolean> cir) {
         if (!selectedTab.getType().equals(ItemGroup.Type.INVENTORY)) return;
         if (input.getKeycode() != InputUtil.GLFW_KEY_DELETE) return;
+        if (client == null || focusedSlot == null) return;
 
-        int slotIdx = handler.slots.indexOf(focusedSlot);
-        if (slotIdx < 1 || slotIdx > 4 || focusedSlot.getStack().isEmpty()) return;
+        ClientPlayerEntity player = client.player;
+        if (player == null) return;
+
+        int idx = handler.slots.indexOf(focusedSlot);
+        if (idx < 1 || idx > 4 || focusedSlot.getStack().isEmpty()) return;
 
         focusedSlot.setStack(ItemStack.EMPTY);
-        client.player.networkHandler.sendPacket(new CreativeInventoryActionC2SPacket(slotIdx, ItemStack.EMPTY));
+        player.networkHandler.sendPacket(new CreativeInventoryActionC2SPacket(idx, ItemStack.EMPTY));
 
         cir.setReturnValue(true);
     }
