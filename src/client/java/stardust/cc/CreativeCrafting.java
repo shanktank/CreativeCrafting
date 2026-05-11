@@ -49,6 +49,7 @@ public class CreativeCrafting implements ClientModInitializer {
     }
 
     @Override
+    @SuppressWarnings("null")
     public void onInitializeClient() {
         loadConfig();
 

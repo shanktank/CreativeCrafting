@@ -67,16 +67,18 @@ public abstract class CreativeInventoryScreenMixin extends AbstractContainerScre
     private void onKeyPressed(KeyEvent input, CallbackInfoReturnable<Boolean> cir) {
         if (!selectedTab.getType().equals(CreativeModeTab.Type.INVENTORY)) return;
         if (input.key() != GLFW.GLFW_KEY_DELETE) return;
-        if (minecraft == null || hoveredSlot == null) return;
 
         LocalPlayer player = minecraft.player;
         if (player == null) return;
 
-        int idx = menu.slots.indexOf(hoveredSlot);
-        if (idx < 1 || idx > 4 || !hoveredSlot.hasItem()) return;
+        Slot hovered = hoveredSlot;
+        if (hovered == null) return;
 
-        hoveredSlot.set(ItemStack.EMPTY);
-        player.connection.send(new ServerboundSetCreativeModeSlotPacket(idx, ItemStack.EMPTY));
+        int index = menu.slots.indexOf(hovered);
+        if (index < 1 || index > 4 || !hovered.hasItem()) return;
+
+        hovered.set(ItemStack.EMPTY);
+        player.connection.send(new ServerboundSetCreativeModeSlotPacket(index, ItemStack.EMPTY));
 
         cir.setReturnValue(true);
     }
