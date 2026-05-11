@@ -4,7 +4,6 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import com.mojang.brigadier.arguments.BoolArgumentType;
@@ -17,9 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class CreativeCrafting implements ClientModInitializer {
-    public static final MinecraftClient CLIENT = MinecraftClient.getInstance();
     public static final Logger LOGGER = LogUtils.getLogger();
-    
     private static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("creativecrafting.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     
@@ -79,7 +76,7 @@ public class CreativeCrafting implements ClientModInitializer {
     }
 
     public static class Config {
-        private boolean sticky = false;
+        private boolean sticky;
 
         public Config(boolean sticky) {
             this.sticky = sticky;

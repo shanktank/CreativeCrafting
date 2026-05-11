@@ -1,0 +1,25 @@
+{
+	"name": "CreativeCrafting",
+	"image": "mcr.microsoft.com/devcontainers/java:21-bookworm",
+	"features": {
+		"ghcr.io/devcontainers/features/java:1": {
+			"version": "none",
+			"installGradle": "false"
+		}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"vscjava.vscode-java-pack"
+			],
+			"settings": {
+				"java.import.gradle.enabled": true,
+				"java.import.gradle.wrapper.enabled": true,
+				"java.import.gradle.java.home": "/usr/lib/jvm/msopenjdk-current",
+				"java.jdt.ls.java.home": "/usr/lib/jvm/msopenjdk-current"
+			}
+		}
+	},
+	"postCreateCommand": "chmod +x ./gradlew && ./gradlew --version",
+	"remoteUser": "vscode"
+}
