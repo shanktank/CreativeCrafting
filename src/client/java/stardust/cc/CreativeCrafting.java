@@ -1,11 +1,11 @@
 package stardust.cc;
 
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.logging.LogUtils;
 import com.google.gson.Gson;
@@ -19,7 +19,7 @@ public class CreativeCrafting implements ClientModInitializer {
     public static final Logger LOGGER = LogUtils.getLogger();
     private static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("creativecrafting.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    
+
     private static Config config = new Config(true);
 
     public static Config getConfig() {
@@ -50,24 +50,24 @@ public class CreativeCrafting implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        Text enabled = Text.literal("enabled").formatted(Formatting.GREEN);
-        Text disabled = Text.literal("disabled").formatted(Formatting.RED);
-
         loadConfig();
 
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-            dispatcher.register(ClientCommandManager.literal("creativecrafting")
-                .then(ClientCommandManager.literal("sticky")
-                    .then(ClientCommandManager.argument("state", BoolArgumentType.bool())
+            Component enabled = Component.literal("enabled").withStyle(ChatFormatting.GREEN);
+            Component disabled = Component.literal("disabled").withStyle(ChatFormatting.RED);
+
+            dispatcher.register(ClientCommands.literal("creativecrafting")
+                .then(ClientCommands.literal("sticky")
+                    .then(ClientCommands.argument("state", BoolArgumentType.bool())
                         .executes(context -> {
                             config.sticky = BoolArgumentType.getBool(context, "state");
-                            context.getSource().sendFeedback(Text.literal("Sticky mode ").append(config.sticky ? enabled : disabled));
+                            context.getSource().sendFeedback(Component.literal("Sticky mode ").append(config.sticky ? enabled : disabled));
                             saveConfig();
                             return 1;
                         })
                     )
                     .executes(context -> {
-                        context.getSource().sendFeedback(Text.literal("Sticky mode is currently ").append(config.sticky ? enabled : disabled));
+                        context.getSource().sendFeedback(Component.literal("Sticky mode is currently ").append(config.sticky ? enabled : disabled));
                         return 1;
                     })
                 )

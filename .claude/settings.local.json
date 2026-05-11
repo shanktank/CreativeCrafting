@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(jar -tf:*)",
+      "Bash(jar -xf:*)",
+      "Bash(xargs -I {} sh -c 'jar -tf {} | grep -i \"\"event\"\"')",
+      "Bash(xargs -I {} sh -c 'jar -tf {} 2>/dev/null')",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "WebFetch(domain:docs.fabricmc.net)",
+      "WebFetch(domain:wiki.fabricmc.net)",
+      "WebFetch(domain:github.com)"
+    ],
+    "additionalDirectories": [
+      "/home/user/Documents/Git/CreativeCrafting"
+    ]
+  }
+}

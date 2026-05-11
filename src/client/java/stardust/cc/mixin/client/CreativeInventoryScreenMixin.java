@@ -1,16 +1,15 @@
 package stardust.cc.mixin.client;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.packet.c2s.play.CreativeInventoryActionC2SPacket;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -18,41 +17,42 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.lwjgl.glfw.GLFW;
 
-@Mixin(CreativeInventoryScreen.class)
-public abstract class CreativeInventoryScreenMixin extends HandledScreen<ScreenHandler> {
-    @Unique private static final int[] _CC_SLOT_X = { 172, 133, 151, 133, 151 };
-    @Unique private static final int[] _CC_SLOT_Y = {  20,  10,  10,  28,  28 };
+@Mixin(CreativeModeInventoryScreen.class)
+public abstract class CreativeInventoryScreenMixin extends AbstractContainerScreen<AbstractContainerMenu> {
+    @Unique private static final int[] CC_SLOT_X = { 172, 133, 151, 133, 151 };
+    @Unique private static final int[] CC_SLOT_Y = {  20,  10,  10,  28,  28 };
 
-    @Shadow private static ItemGroup selectedTab;
+    @Shadow private static CreativeModeTab selectedTab;
 
-    public CreativeInventoryScreenMixin(ScreenHandler handler) {
+    public CreativeInventoryScreenMixin(AbstractContainerMenu handler) {
         super(handler, null, null);
     }
 
     // Move crafting slots from offscreen
-    @Inject(method = "setSelectedTab", at = @At("TAIL"))
-    private void onSetSelectedTab(ItemGroup tab, CallbackInfo ci) {
-        if (!tab.getType().equals(ItemGroup.Type.INVENTORY)) return;
-        if (handler.slots.size() < 5) return;
+    @Inject(method = "selectTab", at = @At("TAIL"))
+    private void onSelectTab(CreativeModeTab tab, CallbackInfo ci) {
+        if (!tab.getType().equals(CreativeModeTab.Type.INVENTORY)) return;
+        if (menu.slots.size() < 5) return;
 
         for (int i = 0; i < 5; i++) {
-            Slot slot = handler.slots.get(i);
-            slot.x = _CC_SLOT_X[i];
-            slot.y = _CC_SLOT_Y[i];
+            Slot slot = menu.slots.get(i);
+            slot.x = CC_SLOT_X[i];
+            slot.y = CC_SLOT_Y[i];
         }
     }
 
     // Draw backgrounds at moved slot positions
-    @Inject(method = "drawBackground", at = @At("TAIL"))
-    private void onDrawBackground(DrawContext context, float delta, int mouseX, int mouseY, CallbackInfo ci) {
-        if (!selectedTab.getType().equals(ItemGroup.Type.INVENTORY)) return;
-        if (handler.slots.size() < 5) return;
+    @Inject(method = "extractBackground", at = @At("TAIL"))
+    private void onExtractBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+        if (!selectedTab.getType().equals(CreativeModeTab.Type.INVENTORY)) return;
+        if (menu.slots.size() < 5) return;
 
         for (int i = 0; i < 5; i++) {
-            Slot slot = handler.slots.get(i);
-            int sx = x + slot.x - 1;
-            int sy = y + slot.y - 1;
+            Slot slot = menu.slots.get(i);
+            int sx = leftPos + slot.x - 1;
+            int sy = topPos + slot.y - 1;
 
             context.fill(sx,      sy,      sx + 18, sy + 1,  0xFF373737); // top
             context.fill(sx,      sy + 1,  sx + 1,  sy + 17, 0xFF373737); // left
@@ -64,19 +64,19 @@ public abstract class CreativeInventoryScreenMixin extends HandledScreen<ScreenH
 
     // Delete key clears the hovered crafting slot
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
-    private void onKeyPressed(KeyInput input, CallbackInfoReturnable<Boolean> cir) {
-        if (!selectedTab.getType().equals(ItemGroup.Type.INVENTORY)) return;
-        if (input.getKeycode() != InputUtil.GLFW_KEY_DELETE) return;
-        if (client == null || focusedSlot == null) return;
+    private void onKeyPressed(KeyEvent input, CallbackInfoReturnable<Boolean> cir) {
+        if (!selectedTab.getType().equals(CreativeModeTab.Type.INVENTORY)) return;
+        if (input.key() != GLFW.GLFW_KEY_DELETE) return;
+        if (minecraft == null || hoveredSlot == null) return;
 
-        ClientPlayerEntity player = client.player;
+        LocalPlayer player = minecraft.player;
         if (player == null) return;
 
-        int idx = handler.slots.indexOf(focusedSlot);
-        if (idx < 1 || idx > 4 || focusedSlot.getStack().isEmpty()) return;
+        int idx = menu.slots.indexOf(hoveredSlot);
+        if (idx < 1 || idx > 4 || !hoveredSlot.hasItem()) return;
 
-        focusedSlot.setStack(ItemStack.EMPTY);
-        player.networkHandler.sendPacket(new CreativeInventoryActionC2SPacket(idx, ItemStack.EMPTY));
+        hoveredSlot.set(ItemStack.EMPTY);
+        player.connection.send(new ServerboundSetCreativeModeSlotPacket(idx, ItemStack.EMPTY));
 
         cir.setReturnValue(true);
     }
